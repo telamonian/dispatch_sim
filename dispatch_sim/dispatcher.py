@@ -1,70 +1,95 @@
+import numpy as np
+from queue import Queue
+
+from dispatch_sim.event import OrderEvent, FoodPrepEvent, CourierArrivalEvent, PickupEvent
+
 __all__ = ["MatchedDispatcer", "FifoDispatcher"]
 
-class BaseDispatcher:
-    def __init__(self, _eta=None):
-        self.eventHistory = {key: [] for key in BaseEvent.Kind}
 
-        self._eta = _eta
+class _BaseDispatcher:
+    def __init__(self):
+        self.history = {klass.__name__: [] for klass in (OrderEvent, FoodPrepEvent, CourierArrivalEvent, PickupEvent)}
 
-        self.starts = []
-        self.dones = []
-        self.arrivals = []
-        self.pickups = []
+    def __repr__(self):
+        return (f"Mean food wait time: {self.foodWaitTimeMean():.4f}\n"
+                f"Mean courier wait time: {self.courierWaitTimeMean():.4f}")
 
-        self._queue = [
-            (0, "start", 0, self.inputArr["id"][0])
-        ] if self.inputArr.shape[0] else []
+    def addToHistory(self, event, EventClass):
+        # sanity check the event class
+        if not isinstance(event, EventClass):
+            raise ValueError
 
-class MatchedDispatcher(BaseDispatcher):
-    def __init__(self, fname, eta=None):
-        super().__init__(fname=fname, eta=eta)
-        self.doneSet = set()
-        self.arrivalSet = set()
+        # print an informative message about the event to stdout
+        print(event)
 
-    def runArrival(self, event):
-        time, _, orderIx, orderId = event
-        self.arrivals.append((time, orderIx, orderId))
+        # save the event by type for later analysis
+        self.history[event.__class__.__name__].append(event)
 
-        if orderId in self.doneSet:
-            self.pickups.append((time, orderIx, orderId, orderId))
-            self.doneSet.remove(orderId)
+    def doOrder(self, event):
+        self.addToHistory(event, OrderEvent)
+        return event
+
+    def doFoodPrep(self, event):
+        raise NotImplementedError
+
+    def doCourierArrival(self, event):
+        raise NotImplementedError
+
+    def doPickup(self, event):
+        self.addToHistory(event, PickupEvent)
+        return event
+
+    def foodWaitTimeMean(self):
+        return np.mean(event.foodWaitTime() for event in self.history['PickupEvent'])
+
+    def courierWaitTimeMean(self):
+        return np.mean(event.courierWaitTime() for event in self.history['PickupEvent'])
+
+class MatchedDispatcher(_BaseDispatcher):
+    def __init__(self):
+        super().__init__()
+
+        self.courierArrivalDict = {}
+        self.foodPrepDict = {}
+
+    def doFoodPrep(self, event):
+        self.addToHistory(event, FoodPrepEvent)
+
+        oid = event.order.id
+        if oid in self.courierArrivalDict:
+            return event, self.courierArrivalDict.pop(oid)
         else:
-            self.arrivalSet.add(orderId)
+            self.foodPrepDict[oid] = event
 
-    def runDone(self, event):
-        time, _, orderIx, orderId = event
-        self.dones.append((time, orderIx, orderId))
+    def doCourierArrival(self, event):
+        self.addToHistory(event, CourierArrivalEvent)
 
-        if orderId in self.arrivalSet:
-            self.pickups.append((time, orderIx, orderId, orderId))
-            self.arrivalSet.remove(orderId)
+        oid = event.order.id
+        if oid in self.foodPrepDict:
+            return self.foodPrepDict.pop(oid), event
         else:
-            self.doneSet.add(orderId)
+            self.courierArrivalDict[oid] = event
 
 
-class FifoDispatcher(BaseDispatcher):
-    def __init__(self, fname, eta=None):
-        super().__init__(fname=fname, eta=eta)
+class FifoDispatcher(_BaseDispatcher):
+    def __init__(self):
+        super().__init__()
 
-        self.doneQueue = Queue()
-        self.arrivalQueue = Queue()
+        self.foodPrepQueue = Queue()
+        self.courierArrivalQueue = Queue()
 
-    def runArrival(self, event):
-        time, _, arrivalIx, arrivalId = event
-        self.arrivals.append((time, arrivalIx, arrivalId))
+    def doFoodPrep(self, event):
+        self.addToHistory(event, FoodPrepEvent)
 
-        if not self.doneQueue.empty():
-            _, _, doneIx, doneId = self.doneQueue.get(block=False)
-            self.pickups.append((time, doneIx, arrivalIx, doneId, arrivalId))
+        if not self.courierArrivalQueue.empty():
+            return event, self.courierArrivalQueue.get(block=False)
         else:
-            self.arrivalQueue.put(event, block=False)
+            self.foodPrepQueue.put(event, block=False)
 
-    def runDone(self, event):
-        time, _, doneIx, doneId = event
-        self.dones.append((time, doneIx, doneId))
+    def doCourierArrival(self, event):
+        self.addToHistory(event, CourierArrivalEvent)
 
-        if not self.arrivalQueue.empty():
-            _, _, arrivalIx, arrivalId = self.arrivalQueue.get(block=False)
-            self.pickups.append((time, doneIx, arrivalIx, doneId, arrivalId))
+        if not self.foodPrepQueue.empty():
+            return self.foodPrepQueue.get(block=False), event
         else:
-            self.doneQueue.put(event, block=False)
+            self.courierArrivalQueue.put(event, block=False)

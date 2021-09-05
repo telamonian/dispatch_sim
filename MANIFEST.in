@@ -1,3 +1,4 @@
 include LICENSE
 include README.md
-include dispatch_sim/data/*
+
+graft dispatch_sim/data

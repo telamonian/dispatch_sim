@@ -1,8 +1,6 @@
-from enum import Enum, auto
 import json
 import jsonschema
 from operator import attrgetter
-from queue import Queue
 
 from dispatch_sim.dispatcher import MatchedDispatcher, FifoDispatcher
 from dispatch_sim.event import OrderEvent, FoodPrepEvent, CourierArrivalEvent, PickupEvent
