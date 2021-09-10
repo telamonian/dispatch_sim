@@ -2,17 +2,17 @@ from dataclasses import dataclass, field
 
 from .order import Order
 
-__all__ = ["OrderEvent", "FoodPrepEvent", "CourierArrivalEvent", "PickupEvent"]
+__all__ = ["Event", "OrderEvent", "FoodPrepEvent", "CourierArrivalEvent", "PickupEvent"]
 
 
 @dataclass
-class BaseEvent:
+class Event:
     time: float
     order: Order=field(order=False)
 
 
 @dataclass
-class OrderEvent(BaseEvent):
+class OrderEvent(Event):
     def __repr__(self):
         return ("Order submitted\n"
                 f"\ttime: {self.time:.4f}\n"
@@ -21,7 +21,7 @@ class OrderEvent(BaseEvent):
 
 
 @dataclass
-class FoodPrepEvent(BaseEvent):
+class FoodPrepEvent(Event):
     def __repr__(self):
         return ("Food prep finished\n"
                 f"\ttime: {self.time:.4f}\n"
@@ -30,7 +30,7 @@ class FoodPrepEvent(BaseEvent):
 
 
 @dataclass
-class CourierArrivalEvent(BaseEvent):
+class CourierArrivalEvent(Event):
     def __repr__(self):
         return ("Courier arrived\n"
                 f"\ttime: {self.time:.4f}\n"
@@ -39,7 +39,7 @@ class CourierArrivalEvent(BaseEvent):
 
 
 @dataclass
-class PickupEvent(BaseEvent):
+class PickupEvent(Event):
     foodPrepEvent: FoodPrepEvent=field(order=False)
     courierArrivalEvent: CourierArrivalEvent=field(order=False)
 
