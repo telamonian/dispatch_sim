@@ -1,35 +1,41 @@
-import json
-import jsonschema
-from operator import attrgetter
+import argparse
+import numpy as np
+from pathlib import Path
+from queue import PriorityQueue
+import time
 
 from dispatch_sim.dispatcher import MatchedDispatcher, FifoDispatcher
 from dispatch_sim.event import OrderEvent, FoodPrepEvent, CourierArrivalEvent, PickupEvent
+from dispatch_sim.order import loadOrders
 
-orderSchema = {
-    "type": "object",
-    "properties": {
-        "id": {"type": "string"},
-        "name": {"type": "string"},
-        "prepTime": {"type": "number"},
-    },
-}
-
-
-def loadOrders(fpath):
-    with open(fpath) as blob:
-        orders = json.load(blob)
-        for order in orders:
-            jsonschema.validate(order)
-
-    return orders
+HERE = Path(__file__).resolve().parent
 
 
 class Sim:
-    """delta: step size between input orders, in seconds"""
+    def __init__(self, fifo=False, _eta=None):
+        self._dispatcher = FifoDispatcher() if fifo else MatchedDispatcher()
+        self._eventCount = 0
+        self._eventQueue = PriorityQueue
 
+        # if _eta is set, trigger "test mode" by also setting _relatime to False
+        self._eta = _eta
+        self._realtime = _eta is None
 
-    def addOrder(self, time, order):
-        self.extendEventsToRun((
+    def getEvent(self, event):
+        """Fetch the next event from the event queue, discarding the entry count
+        """
+        _, event = self.eventQueue.get()
+        return event
+
+    def putEvent(self, event):
+        """Add an event to this Sim instance's event queue. For stability in case of tie
+        Elements in the queue are implemented as (cnt, event) pairs, where cnt is the entry count
+        """
+        self._eventQueue((self._eventCount, event))
+        self._eventCount += 1
+
+    def addOrder(self, order, time):
+        self.putEvent((
             # food prep event associated with this order event
             OrderEvent(
                 order=order,
@@ -37,62 +43,82 @@ class Sim:
             ),
         ))
 
-    def extendEventsToRun(self, iterable):
-        self._eventsToRun.extend(iterable)
-        self._eventsToRun.sort(key=attrgetter("time"), reverse=True)
-
+    def addOrdersFromFile(self, fpath, t0=0, tdelta=.5):
+        for i, order in enumerate(loadOrders(fpath)):
+            self.addOrder(order, t0 + i*tdelta)
 
     def run(self):
-        while self._eventsToRun:
-            nextEvent = self._getNextEvent()
+        t0 = time.time()
+        while self._eventQueue.not_empty:
+            nextEvent = self.getEvent()
 
-            if nextEvent.kind == BaseEvent.Kind.order:
-                self.orderEvents.append(nextEvent)
-                self.runOrder(event=nextEvent)
+            if self._realtime:
+                # implement the real time behavior via timeout
+                now = time.time() - t0
+                time.sleep(nextEvent.time - now)
 
-            elif nextEvent.kind == BaseEvent.Kind.foodPrep:
-                self.foodPrepEvents.append(nextEvent)
-                self.runFoodPrep(event=nextEvent)
+            if isinstance(nextEvent, OrderEvent):
+                postOrderInfo = self._dispatcher.doOrder(event=nextEvent)
+                self.simulateOrderFollowup(postOrderInfo)
 
-            elif nextEvent.kind == BaseEvent.Kind.courierArrival:
-                self.courrierArrivalEvents.append(nextEvent)
-                self.runCourierArrival(event=nextEvent)
+            elif isinstance(nextEvent, FoodPrepEvent):
+                prePickupInfo = self._dispatcher.doFoodPrep(event=nextEvent)
+                if prePickupInfo is not None:
+                    self.simulatePickup(prePickupInfo)
+
+            elif isinstance(nextEvent, CourierArrivalEvent):
+                prePickupInfo = self._dispatcher.doCourierArrival(event=nextEvent)
+                if prePickupInfo is not None:
+                    self.simulatePickup(prePickupInfo)
+
+            if isinstance(nextEvent, PickupEvent):
+                PickupEvent = self._dispatcher.doPickup(event=nextEvent)
 
             else:
                 raise NotImplementedError
 
-    def runCourierArrival(self, event):
-        raise NotImplementedError
-
-    def runFoodPrep(self, event):
-        raise NotImplementedError
-
-    def runOrder(self, event):
-        self.orderEvents.append(event)
-
-        self.extendEventsToRun((
+    def simulateOrderFollowup(self, event):
+        self.putEvent(
             # food prep event associated with this order event
             FoodPrepEvent(
                 order=event.order,
                 time=event.time + event.order["prepTime"],
-            ),
+            )
+        )
+        self.putEvent(
             # courier arrival event associated with this order event
             CourierArrivalEvent(
                 order=event.order,
                 time=event.time + self._getEta(),
-            ),
-        ))
+            )
+        )
 
     def _getEta(self):
-        if self._eta == None:
+        if self._eta is None:
             return np.random.uniform(3, 15)
         else:
             return self._eta
 
-    def _getNextEvent(self):
-        return self._eventsToRun.pop()
 
-    def loadSimOrders(self, fpath, _delta=.5):
-        for i, order in enumerate(loadOrders(fpath)):
-            self.addOrder(time=i*_delta, order=order)
+def main():
+    parser = argparse.ArgumentParser(description="Simple order-dispatch real-time simulation script")
+    parser.add_argument("--fifo", action="store_true", default=False,
+                        help="if set, use fifo algorithm for courier dispatch, in place of default matching algorithm")
+    parser.add_argument("--fpath", default=HERE/"data"/"dispatch_orders.json",
+                        help="path to input file containing orders in json format, as per the schema in the spec")
+    parser.add_argument("--eta", default=None,
+                        help="if set to a float value, the Sim will run in 'test mode'; all random values are set to "
+                             "the option value, and all wait times in between events are ignored")
 
+    args = vars(parser.parse_args())
+    fifo = args["fifo"]
+    fpath = args["fpath"]
+    _eta = args["eta"]
+
+    sim = Sim(fifo=fifo, _eta=_eta)
+    sim.addOrdersFromFile(fpath)
+    sim.run()
+
+
+if __name__ == "__main__":
+    main()
