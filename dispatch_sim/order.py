@@ -20,6 +20,6 @@ class Order:
     name: str
     prepTime: float
 
-def loadOrders(fpath):
+def loadOrders(fpath: str) -> list[Order]:
     with open(fpath) as blob:
         return [Order(**o) for o in json.load(blob) if jsonschema.validate(o, orderSchema)]

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from .order import Order
 
-__all__ = ["Event", "OrderEvent", "FoodPrepEvent", "CourierArrivalEvent", "PickupEvent"]
+__all__ = ["Event", "OrderEvent", "FoodPrepEvent", "CourierArrivalEvent", "PickupEvent", "eventClasses"]
 
 
 @dataclass
@@ -48,8 +48,8 @@ class PickupEvent(Event):
                 f"\ttime: {self.time:.4f}\n"
                 f"\tid: {self.order.id}\n"
                 f"\tname: {self.order.name}"
-                f"\tfood wait time: {self.foodWaitTime():.4f}\n"
-                f"\tcourier wait time: {self.courierWaitTime():.4f}")
+                f"\tfood wait time: {self.foodWaitTime:.4f}\n"
+                f"\tcourier wait time: {self.courierWaitTime:.4f}")
 
     @property
     def courierWaitTime(self):
@@ -58,3 +58,10 @@ class PickupEvent(Event):
     @property
     def foodWaitTime(self):
         return self.time - self.foodPrepEvent.time
+
+eventClasses = {
+    "OrderEvent": OrderEvent,
+    "FoodPrepEvent": FoodPrepEvent,
+    "CourierArrivalEvent": CourierArrivalEvent,
+    "PickupEvent": PickupEvent
+}
