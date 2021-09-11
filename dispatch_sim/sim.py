@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+from os import PathLike
 from pathlib import Path
 from queue import PriorityQueue
 import time
@@ -28,21 +29,8 @@ class Sim:
         self._eta = _eta
         self._realtime = _eta is None
 
-    def getEvent(self) -> Event:
-        """Fetch the next event from the event queue, discarding the entry count
-        """
-        _, event = self._eventQueue.get()
-        return event
-
-    def putEvent(self, event: Event):
-        """Add an event to this Sim instance's event queue. For stability in case of tie
-        Elements in the queue are implemented as (cnt, event) pairs, where cnt is the entry count
-        """
-        self._eventQueue.put((self._eventCount, event))
-        self._eventCount += 1
-
     def addOrder(self, order: Order, time: float):
-        self.putEvent(
+        self._putEvent(
             # food prep event associated with this order event
             OrderEvent(
                 order=order,
@@ -50,14 +38,14 @@ class Sim:
             ),
         )
 
-    def addOrdersFromFile(self, fpath: str, t0: float=0, tdelta: float=.5):
+    def addOrdersFromFile(self, fpath: PathLike, t0: float=0, tdelta: float=.5):
         for i, order in enumerate(loadOrders(fpath)):
             self.addOrder(order, t0 + i*tdelta)
 
     def run(self):
         t0 = time.time()
-        while self._eventQueue.not_empty:
-            nextEvent = self.getEvent()
+        while not self._eventQueue.empty():
+            nextEvent = self._getEvent()
 
             if self._realtime:
                 # implement the real time behavior via timeout
@@ -66,33 +54,55 @@ class Sim:
 
             if isinstance(nextEvent, OrderEvent):
                 postOrderInfo = self._dispatcher.doOrder(event=nextEvent)
-                self.simulateOrderFollowup(postOrderInfo)
+                self._simulateOrderFollowup(postOrderInfo)
 
             elif isinstance(nextEvent, FoodPrepEvent):
                 prePickupInfo = self._dispatcher.doFoodPrep(event=nextEvent)
                 if prePickupInfo is not None:
-                    self.simulatePickup(*prePickupInfo)
+                    self._simulatePickup(*prePickupInfo)
 
             elif isinstance(nextEvent, CourierArrivalEvent):
                 prePickupInfo = self._dispatcher.doCourierArrival(event=nextEvent)
                 if prePickupInfo is not None:
-                    self.simulatePickup(*prePickupInfo)
+                    self._simulatePickup(*prePickupInfo)
 
-            if isinstance(nextEvent, PickupEvent):
+            elif isinstance(nextEvent, PickupEvent):
                 self._dispatcher.doPickup(event=nextEvent)
 
             else:
                 raise NotImplementedError
 
-    def simulateOrderFollowup(self, event: Event):
-        self.putEvent(
+        # print final stat summary message
+        print(self._dispatcher)
+
+    def _getEta(self):
+        if self._eta is None:
+            return np.random.uniform(3, 15)
+        else:
+            return self._eta
+
+    def _getEvent(self) -> Event:
+        """Fetch the next event from the event queue, discarding the entry count
+        """
+        _, event = self._eventQueue.get()
+        return event
+
+    def _putEvent(self, event: Event):
+        """Add an event to this Sim instance's event queue. For stability in case of tie
+        Elements in the queue are implemented as (cnt, event) pairs, where cnt is the entry count
+        """
+        self._eventQueue.put((self._eventCount, event))
+        self._eventCount += 1
+
+    def _simulateOrderFollowup(self, event: Event):
+        self._putEvent(
             # food prep event associated with this order event
             FoodPrepEvent(
                 order=event.order,
                 time=event.time + event.order.prepTime,
             )
         )
-        self.putEvent(
+        self._putEvent(
             # courier arrival event associated with this order event
             CourierArrivalEvent(
                 order=event.order,
@@ -100,8 +110,8 @@ class Sim:
             )
         )
 
-    def simulatePickup(self, foodPrepEvent: FoodPrepEvent, courierArrivalEvent: CourierArrivalEvent):
-        self.putEvent(
+    def _simulatePickup(self, foodPrepEvent: FoodPrepEvent, courierArrivalEvent: CourierArrivalEvent):
+        self._putEvent(
             # courier arrival event associated with this order event
             PickupEvent(
                 order=foodPrepEvent.order,
@@ -110,12 +120,6 @@ class Sim:
                 courierArrivalEvent=courierArrivalEvent,
             )
         )
-
-    def _getEta(self):
-        if self._eta is None:
-            return np.random.uniform(3, 15)
-        else:
-            return self._eta
 
 
 def main():

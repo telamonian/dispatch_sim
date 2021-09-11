@@ -5,10 +5,10 @@ from .order import Order
 __all__ = ["Event", "OrderEvent", "FoodPrepEvent", "CourierArrivalEvent", "PickupEvent", "eventClasses"]
 
 
-@dataclass
+@dataclass(order=True)
 class Event:
     time: float
-    order: Order=field(order=False)
+    order: Order=field(compare=False)
 
 
 @dataclass
@@ -40,8 +40,8 @@ class CourierArrivalEvent(Event):
 
 @dataclass
 class PickupEvent(Event):
-    foodPrepEvent: FoodPrepEvent=field(order=False)
-    courierArrivalEvent: CourierArrivalEvent=field(order=False)
+    foodPrepEvent: FoodPrepEvent=field(compare=False)
+    courierArrivalEvent: CourierArrivalEvent=field(compare=False)
 
     def __repr__(self):
         return ("Order picked up by courier\n"
