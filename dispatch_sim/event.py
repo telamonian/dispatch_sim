@@ -5,17 +5,17 @@ from .order import Order
 __all__ = ["Event", "OrderEvent", "FoodPrepEvent", "CourierArrivalEvent", "PickupEvent", "eventClasses"]
 
 
-@dataclass(order=True)
+@dataclass
 class Event:
     time: float
-    order: Order=field(compare=False)
+    order: Order
 
 
 @dataclass
 class OrderEvent(Event):
     def __repr__(self):
         return ("Order submitted\n"
-                f"\ttime: {self.time:.4f}\n"
+                f"\ttime: {self.time:.3f} s\n"
                 f"\tid: {self.order.id}\n"
                 f"\tname: {self.order.name}")
 
@@ -24,7 +24,7 @@ class OrderEvent(Event):
 class FoodPrepEvent(Event):
     def __repr__(self):
         return ("Food prep finished\n"
-                f"\ttime: {self.time:.4f}\n"
+                f"\ttime: {self.time:.3f} s\n"
                 f"\tid: {self.order.id}\n"
                 f"\tname: {self.order.name}")
 
@@ -33,23 +33,23 @@ class FoodPrepEvent(Event):
 class CourierArrivalEvent(Event):
     def __repr__(self):
         return ("Courier arrived\n"
-                f"\ttime: {self.time:.4f}\n"
+                f"\ttime: {self.time:.3f} s\n"
                 f"\tdispatched for order id: {self.order.id}\n"
                 f"\tdispatched for order name: {self.order.name}")
 
 
 @dataclass
 class PickupEvent(Event):
-    foodPrepEvent: FoodPrepEvent=field(compare=False)
-    courierArrivalEvent: CourierArrivalEvent=field(compare=False)
+    foodPrepEvent: FoodPrepEvent
+    courierArrivalEvent: CourierArrivalEvent
 
     def __repr__(self):
         return ("Order picked up by courier\n"
-                f"\ttime: {self.time:.4f}\n"
+                f"\ttime: {self.time:.3f} s\n"
                 f"\tid: {self.order.id}\n"
-                f"\tname: {self.order.name}"
-                f"\tfood wait time: {self.foodWaitTime:.4f}\n"
-                f"\tcourier wait time: {self.courierWaitTime:.4f}")
+                f"\tname: {self.order.name}\n"
+                f"\tfood wait time: {round(self.foodWaitTime*1e3)} ms\n"
+                f"\tcourier wait time: {round(self.courierWaitTime*1e3)} ms")
 
     @property
     def courierWaitTime(self):
