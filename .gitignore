@@ -187,9 +187,9 @@ ENV/
 .idea/
 
 # vscode ide stuff
-*.code-workspace
 .history
-.vscode
+.vscode/*
+!.vscode/launch.json
 
 # vim mess
 *.swp
