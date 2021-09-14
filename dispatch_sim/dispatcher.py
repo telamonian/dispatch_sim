@@ -1,3 +1,4 @@
+from abc import ABC
 import numpy as np
 from queue import Queue
 import time
@@ -19,7 +20,7 @@ _EventUnion = Union[OrderEvent, FoodPrepEvent, CourierArrivalEvent, PickupEvent]
 _PrePickupInfo = Optional[tuple[FoodPrepEvent, CourierArrivalEvent]]
 
 
-class Dispatcher:
+class Dispatcher(ABC):
     history: _EventHistory
     timestamp: bool
 

@@ -1,4 +1,5 @@
-from dataclasses import dataclass, field
+from abc import ABC
+from dataclasses import dataclass
 
 from .order import Order
 
@@ -6,7 +7,7 @@ __all__ = ["Event", "OrderEvent", "FoodPrepEvent", "CourierArrivalEvent", "Picku
 
 
 @dataclass
-class Event:
+class Event(ABC):
     time: float
     order: Order
 

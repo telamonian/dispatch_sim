@@ -3,10 +3,9 @@ from pathlib import Path
 from dispatch_sim.order import loadOrders, Order
 
 HERE = Path(__file__).resolve().parent
+ordersFpath = HERE / "data" / "dispatch_orders.json"
 
 class TestOrder:
-    fpath = HERE / "data" / "dispatch_orders.json"
-
     realOrders = [
         Order(
             id="a8cfcb76-7f24-4420-a5ba-d46dd77bdffd",
@@ -26,7 +25,7 @@ class TestOrder:
     ]
 
     def test_loadOrders(self):
-        testOrders = loadOrders(self.fpath)
+        testOrders = loadOrders(ordersFpath)
 
         # assert all(real == test for real, test in zip(self.realOrders, testOrders))
         assert self.realOrders == testOrders
