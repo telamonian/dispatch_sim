@@ -1,8 +1,9 @@
 from abc import ABC
 import numpy as np
 from queue import Queue
+import statistics as sts
 import time
-from typing import Optional, TypedDict, Union
+from typing import Any, Optional, TypedDict, Union
 
 from dispatch_sim.event import OrderEvent, FoodPrepEvent, CourierArrivalEvent, PickupEvent
 
@@ -71,7 +72,7 @@ class Dispatcher(ABC):
         """
         raise NotImplementedError
 
-    def doPickup(self, event: PickupEvent):
+    def doPickup(self, event: PickupEvent) -> None:
         """Handle recieving an order event. Prints an informative message to stdout and adds the event to the
         history for later perusal.
         """
@@ -82,23 +83,24 @@ class Dispatcher(ABC):
         """Returns the mean of the "food wait time" of all picked up orders observed by this Dispatcher instance.
         "food wait time" is the difference between when an order is picked up and when it's preparation is finished
         """
-        return np.mean([event.foodWaitTime for event in self.history["PickupEvent"]])
+        return sts.mean([event.foodWaitTime for event in self.history["PickupEvent"]])
 
     @property
     def courierWaitTimeMean(self) -> float:
         """Returns the mean of the "courier wait time" of all picked up orders observed by this Dispatcher instance.
         "food wait time" is the difference between when an order is picked up and when it's courier arrives
         """
-        return np.mean([event.courierWaitTime for event in self.history["PickupEvent"]])
+        return sts.mean([event.courierWaitTime for event in self.history["PickupEvent"]])
 
-    def _addToHistory(self, event: _EventUnion):
+    def _addToHistory(self, event: _EventUnion) -> None:
         # print an informative message about the event to stdout
         if self.timestamp:
             print(f"[{time.time():.4f}]", end=" ")
         print(event, end="\n\n")
 
-        # save the event by type for later analysis
-        self.history[event.__class__.__name__].append(event)
+        # save the event by type for later analysis. mypy doesn't understand the dynamic
+        # conversion (type) -> (type name) that happens here, ignore mypy error
+        self.history[event.__class__.__name__].append(event)    # type: ignore[misc]
 
 class MatchedDispatcher(Dispatcher):
     """Dispatcher subclass that matches for pickup each courier with the order for which they were originally dispatched
@@ -106,7 +108,7 @@ class MatchedDispatcher(Dispatcher):
     courierArrivalDict: dict[str, CourierArrivalEvent]
     foodPrepDict: dict[str, FoodPrepEvent]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.courierArrivalDict = {}
@@ -138,7 +140,7 @@ class FifoDispatcher(Dispatcher):
     foodPrepQueue: Queue[FoodPrepEvent]
     courierArrivalQueue: Queue[CourierArrivalEvent]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.foodPrepQueue: Queue[FoodPrepEvent] = Queue()

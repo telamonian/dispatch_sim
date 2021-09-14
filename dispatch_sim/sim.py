@@ -33,7 +33,7 @@ class Sim:
         self._eta = _eta
         self._realtime = _realtime
 
-    def addOrder(self, order: Order, time: float):
+    def addOrder(self, order: Order, time: float) -> None:
         """Add a single order to the simulation, to be processed at the given time
         """
         self._putEvent(
@@ -44,14 +44,14 @@ class Sim:
             ),
         )
 
-    def addOrdersFromFile(self, fpath: PathLike, t0: float=0, tdelta: float=.5):
+    def addOrdersFromFile(self, fpath: PathLike, t0: float=0, tdelta: float=.5) -> None:
         """Add a list of orders loaded from a json file to this simulation. The first order will be processed at t0,
         the next order at t0 + tdelta, next at t0 + 2*tdelta, etc
         """
         for i, order in enumerate(loadOrders(fpath)):
             self.addOrder(order, t0 + i*tdelta)
 
-    def run(self):
+    def run(self) -> None:
         """Do a run of our order dispatch simulation over all added orders
         """
         t0 = time.time()
@@ -101,7 +101,7 @@ class Sim:
         _, _, event = self._eventQueue.get()
         return event
 
-    def _putEvent(self, event: Event):
+    def _putEvent(self, event: Event) -> None:
         """Add an event to this Sim instance's event queue as a (eventTime, eventCount, event) triple. Storing objects
         as triples in a priority queue is a common approach that has several advantages (avoids object comparison,
         ensures stability in case of equal priority, etc). See: https://docs.python.org/3/library/heapq.html
@@ -109,7 +109,7 @@ class Sim:
         self._eventQueue.put((event.time, self._eventCount, event))
         self._eventCount += 1
 
-    def _simulateOrderFollowup(self, event: Event):
+    def _simulateOrderFollowup(self, event: Event) -> None:
         self._putEvent(
             # food prep event associated with this order event
             FoodPrepEvent(
@@ -125,7 +125,7 @@ class Sim:
             )
         )
 
-    def _simulatePickup(self, foodPrepEvent: FoodPrepEvent, courierArrivalEvent: CourierArrivalEvent):
+    def _simulatePickup(self, foodPrepEvent: FoodPrepEvent, courierArrivalEvent: CourierArrivalEvent) -> None:
         self._putEvent(
             # courier arrival event associated with this order event
             PickupEvent(
@@ -137,7 +137,7 @@ class Sim:
         )
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Simple order-dispatch real-time simulation")
     parser.add_argument("--eta", default=None, type=int,
         help="if set to a float value, the Sim will use it as the time in between courier dispatch and arrival")
