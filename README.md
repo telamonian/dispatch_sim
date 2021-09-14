@@ -15,13 +15,14 @@
 - Unpack the project archive and then navigate to project root:
 
     ```bash
-    tar -xvzf dispatch_sim.tar.gz
+    tar xvzf dispatch_sim.tar.gz
     cd dispatch_sim
     ```
 
-- Install the `dispatch_sim ` pkg, including the test dependencies:
+- Install the `dispatch_sim` pkg, including the test dependencies:
 
     ```bash
+    # DO NOT USE `python setup.py install`
     pip install .[test]
     ```
 
@@ -30,16 +31,16 @@
 - The `dispatch_sim` pkg will install the `run_dispatch_sim` entrypoint script to your shell's path:
     ```bash
     # run the order-dispatch simulation in real-time using the matched courier dispatch algorithm
-    run_dispatch_simulation
+    run_dispatch_sim
 
     # run the order-dispatch simulation in real-time using the FIFO courier dispatch algorithm
-    run_dispatch_simulation.py --fifo
+    run_dispatch_sim --fifo
 
     # run a quick test version of the order-dispatch simulation that skips over all wait times in-between events
-    run_dispatch_simulation.py --discrete --eta 9
+    run_dispatch_sim --discrete --eta 9
 
     # other cmd-line flags are available for the purpose of facilitating testing; see built-in `--help` for full details
-    run_dispatch_simulation.py --help
+    run_dispatch_sim --help
     ```
 
 ### Usage
@@ -51,7 +52,7 @@
 - Navigate to the project root dir and run:
 
     ```bash
-    pytest
+    python -m pytest
     ```
 
     The unittests (with coverage) should all run automatically from there.
@@ -61,7 +62,7 @@
 - The type correctness can be statically checked via mypy:
 
     ```bash
-    mypy -p dispatch_sim
+    python -m mypy -p dispatch_sim
     ```
 
     Almost every class, function, member, etc, in this pkg has been annotated with type hints using the latest typing syntax that became available as of Python 3.9.
