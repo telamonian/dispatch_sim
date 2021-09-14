@@ -76,7 +76,7 @@ class Sim:
         # print final stat summary message
         print(self._dispatcher, end="\n\n")
 
-    def _getEta(self):
+    def _getEta(self) -> float:
         if self._eta is None:
             return np.random.uniform(3, 15)
         else:

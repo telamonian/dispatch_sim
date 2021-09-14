@@ -12,8 +12,9 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 # mypy per-module options:
-#[[tool.mypy.overrides]]
-#module = "mycode.foo.*"
+[[tool.mypy.overrides]]
+module = "test"
+ignore_errors = true
 
 [tool.pytest.ini_options]
 python_files = [

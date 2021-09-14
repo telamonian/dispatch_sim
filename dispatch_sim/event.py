@@ -14,7 +14,7 @@ class Event(ABC):
 
 @dataclass
 class OrderEvent(Event):
-    def __str__(self):
+    def __str__(self) -> str:
         return ("Order submitted\n"
                 f"\ttime: {self.time:.3f} s\n"
                 f"\tid: {self.order.id}\n"
@@ -23,7 +23,7 @@ class OrderEvent(Event):
 
 @dataclass
 class FoodPrepEvent(Event):
-    def __str__(self):
+    def __str__(self) -> str:
         return ("Food prep finished\n"
                 f"\ttime: {self.time:.3f} s\n"
                 f"\tid: {self.order.id}\n"
@@ -32,7 +32,7 @@ class FoodPrepEvent(Event):
 
 @dataclass
 class CourierArrivalEvent(Event):
-    def __str__(self):
+    def __str__(self) -> str:
         return ("Courier arrived\n"
                 f"\ttime: {self.time:.3f} s\n"
                 f"\tdispatched for order id: {self.order.id}\n"
@@ -44,7 +44,7 @@ class PickupEvent(Event):
     foodPrepEvent: FoodPrepEvent
     courierArrivalEvent: CourierArrivalEvent
 
-    def __str__(self):
+    def __str__(self) -> str:
         return ("Order picked up by courier\n"
                 f"\ttime: {self.time:.3f} s\n"
                 f"\tid: {self.order.id}\n"
@@ -53,11 +53,11 @@ class PickupEvent(Event):
                 f"\tcourier wait time: {round(self.courierWaitTime*1e3)} ms")
 
     @property
-    def courierWaitTime(self):
+    def courierWaitTime(self) -> float:
         return self.time - self.courierArrivalEvent.time
 
     @property
-    def foodWaitTime(self):
+    def foodWaitTime(self) -> float:
         return self.time - self.foodPrepEvent.time
 
 eventClasses = {

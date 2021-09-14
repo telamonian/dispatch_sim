@@ -8,19 +8,22 @@ from dispatch_sim.event import OrderEvent, FoodPrepEvent, CourierArrivalEvent, P
 
 __all__ = ["MatchedDispatcher", "FifoDispatcher"]
 
-# some type hinst aliases
-_EventHistory = TypedDict(
-    '_EventHistory',
-    OrderEvent=list[OrderEvent],
-    FoodPrepEvent=list[FoodPrepEvent],
-    CourierArrivalEvent=list[CourierArrivalEvent],
-    PickupEvent=list[PickupEvent],
-)
+# some type hint aliases
+class _EventHistory(TypedDict):
+    OrderEvent: list[OrderEvent]
+    FoodPrepEvent: list[FoodPrepEvent]
+    CourierArrivalEvent: list[CourierArrivalEvent]
+    PickupEvent: list[PickupEvent]
+
 _EventUnion = Union[OrderEvent, FoodPrepEvent, CourierArrivalEvent, PickupEvent]
 _PrePickupInfo = Optional[tuple[FoodPrepEvent, CourierArrivalEvent]]
 
 
 class Dispatcher(ABC):
+    """Supplies the business logic for handling/dispatching the various events that occur as part of our simulated
+    order dispatch system. In theory, this component could be re-used in a "real", non-simulated dispatch system. For
+    example, a Dispatcher could be used to help implement the behavior of a REST server
+    """
     history: _EventHistory
     timestamp: bool
 
@@ -33,7 +36,7 @@ class Dispatcher(ABC):
         }
         self.timestamp = timestamp
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"Mean food wait time: {round(self.foodWaitTimeMean*1e3)} ms\n"
                 f"Mean courier wait time: {round(self.courierWaitTimeMean*1e3)} ms")
 
@@ -85,6 +88,7 @@ class MatchedDispatcher(Dispatcher):
             return event, self.courierArrivalDict.pop(oid)
         else:
             self.foodPrepDict[oid] = event
+            return None
 
     def doCourierArrival(self, event: CourierArrivalEvent) -> _PrePickupInfo:
         self._addToHistory(event)
@@ -94,7 +98,7 @@ class MatchedDispatcher(Dispatcher):
             return self.foodPrepDict.pop(oid), event
         else:
             self.courierArrivalDict[oid] = event
-
+            return None
 
 class FifoDispatcher(Dispatcher):
     foodPrepQueue: Queue[FoodPrepEvent]
@@ -113,6 +117,7 @@ class FifoDispatcher(Dispatcher):
             return event, self.courierArrivalQueue.get(block=False)
         else:
             self.foodPrepQueue.put(event, block=False)
+            return None
 
     def doCourierArrival(self, event: CourierArrivalEvent) -> _PrePickupInfo:
         self._addToHistory(event)
@@ -121,3 +126,4 @@ class FifoDispatcher(Dispatcher):
             return self.foodPrepQueue.get(block=False), event
         else:
             self.courierArrivalQueue.put(event, block=False)
+            return None
