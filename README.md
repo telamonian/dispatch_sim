@@ -15,7 +15,7 @@
 - Unpack the project archive and then navigate to project root:
 
     ```bash
-    untar -xvzf dispatch_sim.tar.gz
+    tar -xvzf dispatch_sim.tar.gz
     cd dispatch_sim
     ```
 
@@ -42,15 +42,30 @@
     run_dispatch_simulation.py --help
     ```
 
+### Usage
+
+- For more information on usage and simulation details, see specification in `./Dispatch_Simulation_-_Homework.pdf` under the project root
+
 ### Running the unittests
 
-- Navigate to the project root dir and then just execute the `pytest` command:
+- Navigate to the project root dir and run:
 
     ```bash
     pytest
     ```
 
-    The unittests should all run automatically from there.
+    The unittests (with coverage) should all run automatically from there.
+
+### Run the static type checker
+
+- The type correctness can be statically checked via mypy:
+
+    ```bash
+    mypy -p dispatch_sim
+    ```
+
+    Almost every class, function, member, etc, in this pkg has been annotated with type hints using the latest typing syntax that became available as of Python 3.9.
+
 
 ### Troubleshooting
 
@@ -60,6 +75,14 @@
     <path/to/python39> -m pip install .
     ```
 
-### Design notes
+### Dev
+
+#### Design notes
 
 - Commentary on code and program design decisions can be found in the associated docstrings in the source code
+
+#### Export tarball of repo
+
+```bash
+git archive --output=./dispatch_sim.tar.gz --format=tar.gz --prefix=dispatch_sim/ HEAD
+```
