@@ -14,6 +14,10 @@ HERE = Path(__file__).resolve().parent
 
 
 class Sim:
+    """Class that represents a real-time simulation of a simple order dispatch system. Provides the business logic
+    for all of the explicitly "fake" aspects of the simulation. For example, initial generation of all Event instances
+    (which normally would be eg received via appropriate REST endpoints), the real-time waits in between events, etc
+    """
     _dispatcher: Union[MatchedDispatcher, FifoDispatcher]
     _eventCount: int
     _eventQueue: PriorityQueue[tuple[float, int, Event]]
@@ -29,6 +33,8 @@ class Sim:
         self._realtime = _realtime
 
     def addOrder(self, order: Order, time: float):
+        """Add a single order to the simulation, to be processed at the given time
+        """
         self._putEvent(
             # food prep event associated with this order event
             OrderEvent(
@@ -38,10 +44,15 @@ class Sim:
         )
 
     def addOrdersFromFile(self, fpath: PathLike, t0: float=0, tdelta: float=.5):
+        """Add a list of orders loaded from a json file to this simulation. The first order will be processed at t0,
+        the next order at t0 + tdelta, next at t0 + 2*tdelta, etc
+        """
         for i, order in enumerate(loadOrders(fpath)):
             self.addOrder(order, t0 + i*tdelta)
 
     def run(self):
+        """Do a run of our order dispatch simulation over all added orders
+        """
         t0 = time.time()
         while not self._eventQueue.empty():
             nextEvent = self._getEvent()
@@ -126,7 +137,7 @@ class Sim:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Simple order-dispatch real-time simulation script")
+    parser = argparse.ArgumentParser(description="Simple order-dispatch real-time simulation")
     parser.add_argument("--eta", default=None, type=int,
         help="if set to a float value, the Sim will use it as the time in between courier dispatch and arrival")
     parser.add_argument("--discrete", action="store_true", default=False,
