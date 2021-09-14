@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from dispatch_sim.event import OrderEvent
-from dispatch_sim.order import Order
 from dispatch_sim.sim import Sim
 
 # reuse the literal set of Order instances that gets verified by TestOrder
