@@ -19,7 +19,7 @@ _EventUnion = Union[OrderEvent, FoodPrepEvent, CourierArrivalEvent, PickupEvent]
 _PrePickupInfo = Optional[tuple[FoodPrepEvent, CourierArrivalEvent]]
 
 
-class _BaseDispatcher:
+class Dispatcher:
     history: _EventHistory
     timestamp: bool
 
@@ -32,7 +32,7 @@ class _BaseDispatcher:
         }
         self.timestamp = timestamp
 
-    def __repr__(self):
+    def __str__(self):
         return (f"Mean food wait time: {round(self.foodWaitTimeMean*1e3)} ms\n"
                 f"Mean courier wait time: {round(self.courierWaitTimeMean*1e3)} ms")
 
@@ -66,7 +66,7 @@ class _BaseDispatcher:
         # save the event by type for later analysis
         self.history[event.__class__.__name__].append(event)
 
-class MatchedDispatcher(_BaseDispatcher):
+class MatchedDispatcher(Dispatcher):
     courierArrivalDict: dict[str, CourierArrivalEvent]
     foodPrepDict: dict[str, FoodPrepEvent]
 
@@ -95,7 +95,7 @@ class MatchedDispatcher(_BaseDispatcher):
             self.courierArrivalDict[oid] = event
 
 
-class FifoDispatcher(_BaseDispatcher):
+class FifoDispatcher(Dispatcher):
     foodPrepQueue: Queue[FoodPrepEvent]
     courierArrivalQueue: Queue[CourierArrivalEvent]
 
