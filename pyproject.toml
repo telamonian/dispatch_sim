@@ -17,6 +17,8 @@ module = "test"
 ignore_errors = true
 
 [tool.pytest.ini_options]
+addopts = "--cov=dispatch_sim"
+norecursedirs = ["test/data"]
 python_files = [
     "test_*.py",
 ]
@@ -25,5 +27,3 @@ testpaths = [
 ]
 #python_classes = ["Test"]
 #python_functions = ["test"]
-
-norecursedirs = ["test/data"]
