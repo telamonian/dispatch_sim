@@ -1,5 +1,6 @@
-from dispatch_sim.order import loadOrders, Order
 from pathlib import Path
+
+from dispatch_sim.order import loadOrders, Order
 
 HERE = Path(__file__).resolve().parent
 

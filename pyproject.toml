@@ -17,10 +17,10 @@ disallow_untyped_defs = true
 
 [tool.pytest.ini_options]
 python_files = [
-    "test_*.py"
+    "test_*.py",
 ]
 testpaths = [
-    "test"
+    "test",
 ]
 #python_classes = ["Test"]
 #python_functions = ["test"]
