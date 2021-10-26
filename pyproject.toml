@@ -22,7 +22,7 @@ module = "test"
 ignore_errors = true
 
 [tool.pytest.ini_options]
-addopts = "--cov=dispatch_sim"
+addopts = "--cov=dispatch_sim --cov-report=term-missing"
 norecursedirs = ["test/data"]
 python_files = [
     "test_*.py",

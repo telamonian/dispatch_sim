@@ -5,3 +5,14 @@ services:
     init: true
     volumes:
     - ./:/dispatch_sim
+    working_dir: /dispatch_sim
+    command: bash -c "
+        python -m pip install .[test]
+        && python -m pytest
+      "
+
+# to run all tests cleanly:
+# docker-compose up --force-recreate
+
+# to run interactive:
+# docker-compose run --rm test bash
