@@ -66,6 +66,19 @@
     The unittests (with coverage) should all run automatically from there.
 
 
+### Running the unittests in a docker container
+
+- Alternatively, the unittests can be run in a clean docker container. This requires a working local installion of `docker` and `docker-compose`, as well as network access to the public docker-hub.
+
+- Navigate to the project root dir and run:
+
+    ```bash
+    docker-compose up --force-recreate
+    ```
+
+    Running the unittests this way allows for a full test of the package configuration, including the dependency specifications listed via `install_requires` and `options.extras_require` in the `setup.cfg` file.
+
+
 ### Run the static type checker
 
 - The type correctness can be statically checked via mypy:
