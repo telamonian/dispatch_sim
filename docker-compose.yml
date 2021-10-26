@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  test:
+    image: python:3.9-slim
+    init: true
+    volumes:
+    - ./:/dispatch_sim

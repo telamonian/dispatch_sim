@@ -5,10 +5,12 @@
 
 - MIT
 
+
 ### Requirements
 
 - python 3.9 or above
 - mac or linux recommended (tested on mac, windows users may run into issues)
+
 
 ### Install
 
@@ -26,6 +28,7 @@
     pip install .[test]
     ```
 
+
 ### Running the simulation
 
 - The `dispatch_sim` pkg will install the `run_dispatch_sim` entrypoint script to your shell's path:
@@ -34,18 +37,23 @@
     run_dispatch_sim
 
     # run the order-dispatch simulation in real-time using the FIFO courier dispatch algorithm
+    # --fifo: flag to use FIFO algorithm
     run_dispatch_sim --fifo
 
     # run a quick test version of the order-dispatch simulation that skips over all wait times in-between events
+    # --discrete: flag to run simulation using discrete approach (skip over all wait times) instead of real-time
+    # --eta: fix all random values in simulation to supplied value
     run_dispatch_sim --discrete --eta 9
 
     # other cmd-line flags are available for the purpose of facilitating testing; see built-in `--help` for full details
     run_dispatch_sim --help
     ```
 
+
 ### Usage
 
 - For more information on usage and simulation details, see specification in `./Dispatch_Simulation_-_Homework.pdf` under the project root
+
 
 ### Running the unittests
 
@@ -56,6 +64,7 @@
     ```
 
     The unittests (with coverage) should all run automatically from there.
+
 
 ### Run the static type checker
 
@@ -75,6 +84,7 @@
     ```bash
     <path/to/python39> -m pip install .
     ```
+
 
 ### Dev
 
