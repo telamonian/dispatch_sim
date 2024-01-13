@@ -40,6 +40,8 @@ class FoodPrepEvent(Event):
 class CourierArrivalEvent(Event):
     """Event type that represents the arrival of a courier dispatched in response to particular order
     """
+    capacity: int
+
     def __str__(self) -> str:
         return ("Courier arrived\n"
                 f"\ttime: {self.time:.3f} s\n"
@@ -61,7 +63,9 @@ class PickupEvent(Event):
                 f"\tid: {self.order.id}\n"
                 f"\tname: {self.order.name}\n"
                 f"\tfood wait time: {round(self.foodWaitTime*1e3)} ms\n"
-                f"\tcourier wait time: {round(self.courierWaitTime*1e3)} ms")
+                f"\tcourier wait time: {round(self.courierWaitTime*1e3)} ms\n"
+                f"\tcourier dispatched for order id: {self.courierArrivalEvent.order.id}\n"
+                f"\tcurrent courier capacity: {self.courierArrivalEvent.capacity}")
 
     @property
     def courierWaitTime(self) -> float:

@@ -7,7 +7,7 @@ from queue import PriorityQueue
 import time
 from typing import Optional, Union
 
-from dispatch_sim.dispatcher import MatchedDispatcher, FifoDispatcher
+from dispatch_sim.dispatcher import MatchedDispatcher, FifoDispatcher, CapacityDispatcher
 from dispatch_sim.event import Event, OrderEvent, FoodPrepEvent, CourierArrivalEvent, PickupEvent
 from dispatch_sim.order import loadOrders, Order
 
@@ -19,14 +19,19 @@ class Sim:
     for all of the explicitly "fake" aspects of the simulation. For example, initial generation of all Event instances
     (which normally would be eg received via appropriate REST endpoints), the real-time waits in between events, etc
     """
-    _dispatcher: Union[MatchedDispatcher, FifoDispatcher]
+    _dispatcher: Union[MatchedDispatcher, FifoDispatcher, CapacityDispatcher]
     _eventCount: int
     _eventQueue: PriorityQueue[tuple[float, int, Event]]
     _eta: Optional[float]
     _realtime: bool
 
-    def __init__(self, fifo: bool=False, timestamp: bool=False, _eta: Optional[float]=None, _realtime: bool=True):
-        self._dispatcher = FifoDispatcher(timestamp=timestamp) if fifo else MatchedDispatcher(timestamp=timestamp)
+    def __init__(self, capacity: bool=False, fifo: bool=False, timestamp: bool=False, _eta: Optional[float]=None, _realtime: bool=True):
+        if fifo:
+            self._dispatcher = FifoDispatcher(timestamp=timestamp)
+        elif capacity:
+            self._dispatcher = CapacityDispatcher(timestamp=timestamp)
+        else:
+            MatchedDispatcher(timestamp=timestamp)
         self._eventCount = 0
         self._eventQueue = PriorityQueue()
 
@@ -122,6 +127,7 @@ class Sim:
             CourierArrivalEvent(
                 order=event.order,
                 time=event.time + self._getEta(),
+                capacity=np.random.randint(1,4)
             )
         )
 
@@ -145,6 +151,7 @@ def main() -> None:
         help="if set, do a discrete time Sim; all inter-event waiting times are ignored")
     parser.add_argument("--fifo", action="store_true", default=False,
         help="if set, use fifo algorithm for courier dispatch, in place of default matching algorithm")
+    parser.add_argument("--capacity", action="store_true", default=False)
     parser.add_argument("--fpath", default=HERE/"data"/"dispatch_orders.json",
         help="path to input file containing orders in json format, as per the schema in the spec")
     parser.add_argument("--timestamp", action="store_true", default=False,
@@ -153,6 +160,7 @@ def main() -> None:
     kwargs = vars(parser.parse_args())
 
     sim = Sim(
+        capacity=kwargs["capacity"],
         fifo=kwargs["fifo"],
         timestamp=kwargs["timestamp"],
         _eta=kwargs["eta"],

@@ -163,3 +163,39 @@ class FifoDispatcher(Dispatcher):
         else:
             self.courierArrivalQueue.put(event, block=False)
             return None
+
+class CapacityDispatcher(Dispatcher):
+    """Dispatcher subclass that matches for pickup each prepared order with the first available courier
+    """
+    foodPrepQueue: Queue[FoodPrepEvent]
+    courierArrivalQueue: Queue[CourierArrivalEvent]
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.foodPrepQueue: Queue[FoodPrepEvent] = Queue()
+        self.courierArrivalQueue: Queue[CourierArrivalEvent] = Queue()
+
+    def doFoodPrep(self, event: FoodPrepEvent) -> _PrePickupInfo:
+        self._addToHistory(event)
+
+        if not self.courierArrivalQueue.empty():
+            courier = self.courierArrivalQueue.get(block=False)
+            courier.capacity -= 1
+            if courier.capacity > 0:
+                self.courierArrivalQueue.put(courier)
+            return event, courier
+        else:
+            self.foodPrepQueue.put(event, block=False)
+            return None
+
+    def doCourierArrival(self, event: CourierArrivalEvent) -> _PrePickupInfo:
+        self._addToHistory(event)
+
+        if not self.foodPrepQueue.empty():
+            event.capacity -= 1
+            return self.foodPrepQueue.get(block=False), event
+        else:
+            if event.capacity > 0:
+                self.courierArrivalQueue.put(event, block=False)
+            return None

@@ -13,7 +13,7 @@ class _TestDispatcher:
         26.5,
         orders[0],
         FoodPrepEvent(21.5, orders[0]),
-        CourierArrivalEvent(26.5, orders[0]),
+        CourierArrivalEvent(26.5, orders[0], capacity=2),
     )
 
     realFoodPrepEvents = [
@@ -22,9 +22,9 @@ class _TestDispatcher:
         FoodPrepEvent(41, orders[1]),
     ]
     realCourierArrivalEvents = [
-        CourierArrivalEvent(26.5, orders[0]),
-        CourierArrivalEvent(27, orders[1]),
-        CourierArrivalEvent(27.5, orders[2]),
+        CourierArrivalEvent(26.5, orders[0], capacity=2),
+        CourierArrivalEvent(27, orders[1], capacity=2),
+        CourierArrivalEvent(27.5, orders[2], capacity=2),
     ]
 
     def test_doOrder(self):
@@ -67,10 +67,10 @@ class TestFifoDispatcher(_TestDispatcher):
     realPickupInfoPairs = [
         None,
         None,
-        (FoodPrepEvent(20.5, orders[2]), CourierArrivalEvent(26.5, orders[0])),
-        (FoodPrepEvent(21.5, orders[0]), CourierArrivalEvent(27, orders[1])),
+        (FoodPrepEvent(20.5, orders[2]), CourierArrivalEvent(26.5, courier[0].id)),
+        (FoodPrepEvent(21.5, orders[0]), CourierArrivalEvent(27, courier[0].id)),
         None,
-        (FoodPrepEvent(41, orders[1]), CourierArrivalEvent(27.5, orders[2])),
+        (FoodPrepEvent(41, orders[1]), CourierArrivalEvent(27.5, orders[0])),
     ]
 
     def setup_method(self, test_method):
